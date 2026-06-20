@@ -60,5 +60,5 @@ echo.
 echo You can now run the dashboard with:
 echo     run.bat
 echo.
-echo Open http://localhost:8090 after starting.
+echo Open http://localhost:8090 after starting (для локальної розробки). На проді/Docker - без порту (порт 80).
 pause

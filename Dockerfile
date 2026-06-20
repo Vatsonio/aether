@@ -1,4 +1,4 @@
-# Aether — Multi-stage Dockerfile
+# Aether - Multi-stage Dockerfile
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
@@ -27,6 +27,7 @@ COPY backend backend/
 COPY static static/
 COPY config config/
 
-EXPOSE 8090
+EXPOSE 80
 
-CMD ["uvicorn", "backend.app:app", "--host", "0.0.0.0", "--port", "8090"]
+ENV PORT=80
+CMD ["sh", "-c", "uvicorn backend.app:app --host 0.0.0.0 --port ${PORT}"]

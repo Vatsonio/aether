@@ -1,22 +1,36 @@
 version: '3.8'
 
+# Aether - Production compose for Portainer stack
+# 
+# GitHub Actions (in .github/workflows/) builds the Docker image and pushes it to:
+#   ghcr.io/vatsonio/aether:latest   (and version tags)
+#
+# In Portainer:
+#   - Best: Stacks → Add stack → "Repository" → https://github.com/Vatsonio/aether
+#   - Or paste this file (image will be pulled automatically)
+#
+# IMPORTANT: Do NOT use 'build:' here. Build is done in CI.
+# For local dev build you can temporarily add: build: .   and use docker compose build
+
 services:
   aether:
-    build: .
+    image: ghcr.io/vatsonio/aether:latest
     container_name: aether
     restart: unless-stopped
     ports:
-      - "8090:8090"
+      - "80:80"
     volumes:
-      - ./config:/app/config:ro
+      # Real config lives on the host (not inside git clone). Create /opt/aether/config/config.yml on your server.
+      - /opt/aether/config:/app/config:ro
       - /proc:/proc:ro
       - /sys:/sys:ro
     pid: "host"
     network_mode: "host"
     environment:
+      - PORT=80
       - PYTHONUNBUFFERED=1
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health')"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80/health')"]
       interval: 30s
       timeout: 5s
       retries: 3

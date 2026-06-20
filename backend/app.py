@@ -1,9 +1,10 @@
 """
-Aether — Modern Homelab Dashboard
+Aether - Modern Homelab Dashboard
 Autonomous implementation: FastAPI + live server-side health checks + beautiful glass UI
 """
 
 import asyncio
+import os
 import time
 from typing import Literal, Optional, List, Dict, Any
 from pathlib import Path
@@ -408,4 +409,5 @@ async def health():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("backend.app:app", host="0.0.0.0", port=8090, reload=True)
+    port = int(os.environ.get("PORT", "8090"))
+    uvicorn.run("backend.app:app", host="0.0.0.0", port=port, reload=True)

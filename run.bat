@@ -53,7 +53,7 @@ if errorlevel 1 (
 
 echo.
 echo [INFO] Starting Aether server...
-echo Open in your browser: http://localhost:8090
+echo Open in your browser: http://localhost:8090 (локальна розробка; на сервері - просто IP без порту)
 echo Press Ctrl+C to stop the server.
 echo.
 

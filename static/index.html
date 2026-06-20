@@ -393,7 +393,7 @@
         <div>
           <label class="block text-sm mb-1 text-slate-400">Оновлення метрик сервера (сек)</label>
           <input id="settings-system-interval" type="number" min="0.5" max="10" step="0.5" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm">
-          <div class="text-[10px] text-slate-500 mt-0.5">CPU / RAM / Трафік / Температура — можна 0.5–2с</div>
+          <div class="text-[10px] text-slate-500 mt-0.5">CPU / RAM / Трафік / Температура - можна 0.5–2с</div>
         </div>
 
         <!-- Toggles -->
@@ -458,7 +458,7 @@
     let pollTimer = null;
     let systemTimer = null;
 
-    // Traffic graphs history — larger for fast updates
+    // Traffic graphs history - larger for fast updates
     let trafficUpHistory = [];
     let trafficDownHistory = [];
     const MAX_TRAFFIC_POINTS = 120; // supports 0.5s updates for ~60s history, or 2s for ~4min
@@ -789,7 +789,7 @@
       // Bonus: press ? to show help
       document.addEventListener('keydown', function(e) {
         if (e.key === '?') {
-          alert('Aether — шорткати:\n/ — фокус пошуку\nEsc — очистити пошук\nКлік по картці відкриває сервіс\nНалаштування — шестерня');
+          alert('Aether - шорткати:\n/ - фокус пошуку\nEsc - очистити пошук\nКлік по картці відкриває сервіс\nНалаштування - шестерня');
         }
       });
 
@@ -912,7 +912,7 @@
 
       ctx.clearRect(0, 0, w, h);
 
-      // No background fill — fully transparent over parent glass layer
+      // No background fill - fully transparent over parent glass layer
 
       // Ultra faint guide lines (minimal, 2 lines)
       ctx.strokeStyle = 'rgba(148, 163, 184, 0.025)';
@@ -965,7 +965,7 @@
       ctx.fillStyle = gradient;
       ctx.fill();
 
-      // Tiny end dot — faint white + colored core
+      // Tiny end dot - faint white + colored core
       const lastX = w - 0.5;
       const lastY = h - (data[data.length-1] / maxVal) * (h * 0.82) - 0.5;
       ctx.fillStyle = 'rgba(255,255,255,0.25)';

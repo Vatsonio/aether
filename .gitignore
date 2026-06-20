@@ -112,9 +112,16 @@ pyrightconfig.json
 
 # Keep example files
 !*.example
+# Real user config (private IPs, API keys, etc.) — never commit
+config/config.yml
+
+# Template (safe to commit)
 !config/config.yml.example
 
-# AI personal knowledge file (for Grok / AI assistant only, never commit)
+# Local AI / Grok knowledge files only (never commit)
 AETHER_PROJECT_KNOWLEDGE.md
-.aether-knowledge*
+AETHER_BUGS_AND_ISSUES.md
+.ai-knowledge/
+local-ai-notes*
 *AI_KNOWLEDGE*
+*.grok-knowledge*

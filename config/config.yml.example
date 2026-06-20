@@ -1,0 +1,56 @@
+# Aether — Config example (copy to config/config.yml and customize)
+# This file should be placed on the server at /opt/aether/config/config.yml
+
+title: "Aether"
+subtitle: "Homelab"
+
+# Global settings
+refresh_interval: 30
+timeout: 5
+
+weather:
+  openweather_api_key: ""   # get free key at https://openweathermap.org/api
+  default_city: "Kyiv"
+
+services:
+  - name: "Мережа"
+    icon: "🌐"
+    items:
+      - name: "Router"
+        subtitle: "192.168.1.1"
+        url: "http://192.168.1.1"
+        icon: "📡"
+        status:
+          type: "http"
+          url: "http://192.168.1.1"
+          interval: 20
+
+      - name: "Switch"
+        subtitle: "192.168.1.10"
+        url: "http://192.168.1.10"
+        icon: "🔌"
+        status:
+          type: "http"
+          url: "http://192.168.1.10"
+
+  - name: "Сервери"
+    icon: "🖥️"
+    items:
+      - name: "Proxmox"
+        subtitle: "192.168.1.2:8006"
+        url: "https://192.168.1.2:8006"
+        icon: "🧱"
+        status:
+          type: "http"
+          url: "https://192.168.1.2:8006"
+          insecure: true
+          accept_status: [200, 301, 302, 401, 403]
+
+      - name: "Portainer"
+        subtitle: "192.168.1.5:9443"
+        url: "https://192.168.1.5:9443"
+        icon: "🐳"
+        status:
+          type: "http"
+          url: "https://192.168.1.5:9443"
+          insecure: true
