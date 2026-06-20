@@ -1,5 +1,9 @@
 # Aether — Config example (copy to config/config.yml and customize)
 # This file should be placed on the server at /opt/aether/config/config.yml
+#
+# NOTE: For the OpenWeather API key, it is better to use the environment variable
+# OPENWEATHER_API_KEY instead of putting it here.
+# The backend will prefer the env var if set.
 
 title: "Aether"
 subtitle: "Homelab"
@@ -9,7 +13,7 @@ refresh_interval: 30
 timeout: 5
 
 weather:
-  openweather_api_key: ""   # get free key at https://openweathermap.org/api
+  openweather_api_key: ""   # fallback only. Preferred via OPENWEATHER_API_KEY env var
   default_city: "Kyiv"
 
 services:
@@ -54,3 +58,4 @@ services:
           type: "http"
           url: "https://192.168.1.5:9443"
           insecure: true
+          accept_status: [200, 301, 302, 401, 403]

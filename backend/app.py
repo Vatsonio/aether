@@ -290,7 +290,18 @@ def load_config() -> AppConfig:
     if not CONFIG_PATH.exists():
         raise FileNotFoundError(f"Config not found: {CONFIG_PATH}")
     raw = yaml.safe_load(CONFIG_PATH.read_text(encoding="utf-8"))
-    return AppConfig(**raw)
+    cfg = AppConfig(**raw)
+
+    # Override sensitive weather settings from environment variables (recommended for Docker/Portainer)
+    env_api_key = os.environ.get("OPENWEATHER_API_KEY")
+    if env_api_key:
+        cfg.weather.openweather_api_key = env_api_key.strip()
+
+    env_default_city = os.environ.get("WEATHER_DEFAULT_CITY") or os.environ.get("OPENWEATHER_DEFAULT_CITY")
+    if env_default_city:
+        cfg.weather.default_city = env_default_city.strip()
+
+    return cfg
 
 
 # App
@@ -326,7 +337,13 @@ async def periodic_checks():
 # API
 @app.get("/api/config")
 async def get_config():
-    return config.model_dump()
+    cfg = config.model_dump()
+    # Never expose the real API key to the frontend
+    if "weather" in cfg and isinstance(cfg["weather"], dict):
+        if "openweather_api_key" in cfg["weather"]:
+            key = cfg["weather"]["openweather_api_key"]
+            cfg["weather"]["openweather_api_key"] = "***" if key else ""
+    return cfg
 
 
 @app.get("/api/status")
@@ -349,7 +366,7 @@ async def get_weather(city: str = None):
     city = city or default_city
 
     if not api_key:
-        return {"error": "OpenWeather API key is not configured in config.yml"}
+        return {"error": "OpenWeather API key is not configured (set OPENWEATHER_API_KEY env or in config.yml)"}
 
     try:
         async with httpx.AsyncClient(timeout=10) as client:
