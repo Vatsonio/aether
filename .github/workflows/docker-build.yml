@@ -31,6 +31,18 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Using version tag: $VERSION"
 
+      - name: Prepare tags
+        id: prepare-tags
+        run: |
+          VERSION=$(cat VERSION 2>/dev/null | tr -d '\n\r\t ' || true)
+          if [ -z "$VERSION" ]; then
+            VERSION="dev"
+          fi
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          TAGS="ghcr.io/vatsonio/aether:latest,ghcr.io/vatsonio/aether:$VERSION,ghcr.io/vatsonio/aether:sha-$SHORT_SHA"
+          echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
+          echo "Using tags: $TAGS"
+
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -46,17 +58,13 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            latest
-            ${{ steps.get-version.outputs.version }}
-            type=sha,format=short
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ${{ steps.prepare-tags.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
