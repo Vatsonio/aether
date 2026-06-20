@@ -23,6 +23,7 @@
       background-size: cover;
       background-position: center;
       background-attachment: fixed;
+      background-repeat: no-repeat;
       padding-left: env(safe-area-inset-left, 0);
       padding-right: env(safe-area-inset-right, 0);
     }
@@ -37,22 +38,34 @@
       pointer-events: none;
     }
 
-    /* Mobile: make background static (scrolls with content) to avoid "image ends" bug when scrolling past viewport */
+    /* Mobile: fixed background layer for full viewport height on sides (cover/crop, no repeat or seams) */
     @media (max-width: 768px) {
       body {
-        background-attachment: scroll;
-        background-position: top center;
-        background-size: cover;
-        background-repeat: no-repeat;
+        background-image: none;
         position: relative;
       }
 
+      body::after {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80');
+        background-size: cover;
+        background-position: center;
+        z-index: -2;
+        pointer-events: none;
+      }
+
       body::before {
-        position: absolute;
+        position: fixed;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
+        z-index: -1;
       }
     }
 
@@ -196,7 +209,7 @@
     <header id="main-header" class="sticky top-0 z-50 border-b border-white/10 bg-black/10 backdrop-blur-3xl supports-[backdrop-filter]:bg-black/10 transition-all duration-300" style="padding-top: max(env(safe-area-inset-top, 0px), 0px);">
       <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-2.5 sm:py-4 flex flex-wrap items-center justify-between gap-x-2 sm:gap-x-3 gap-y-1.5">
         <div class="flex items-center gap-x-3">
-          <div class="flex items-center gap-x-2">
+          <div class="hidden sm:flex items-center gap-x-2">
             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center text-black">
               <i class="fa-solid fa-infinity text-lg sm:text-xl"></i>
             </div>
@@ -214,9 +227,9 @@
               id="search"
               type="text" 
               placeholder="Пошук..." 
-              class="w-full bg-white/5 border border-white/10 text-sm placeholder:text-slate-500 focus:outline-none focus:border-slate-400/50 rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2 pl-8 sm:pl-10"
+              class="w-full bg-white/5 border border-white/10 text-sm text-white placeholder:text-slate-400 focus:outline-none focus:border-slate-400/50 rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2 pl-10 sm:pl-12"
             >
-            <i class="fa-solid fa-search absolute left-4 top-2.5 text-slate-500"></i>
+            <i class="fa-solid fa-search absolute left-4 top-2.5 text-slate-400"></i>
           </div>
 
           <!-- Weather + Clock -->
@@ -225,7 +238,7 @@
               <span id="weather-icon" class="text-lg"></span>
               <span id="weather-temp" class="font-medium"></span>
             </div>
-            <div id="clock" class="font-mono text-base sm:text-lg font-semibold text-slate-100 tracking-[0.5px] tabular-nums"></div>
+            <div id="clock" class="hidden sm:block font-mono text-base sm:text-lg font-semibold text-slate-100 tracking-[0.5px] tabular-nums"></div>
           </div>
 
           <button onclick="refreshAll()" 
@@ -319,21 +332,21 @@
           </div>
 
           <!-- Traffic Up -->
-          <div class="bg-white/5 rounded-2xl p-2">
+          <div class="bg-white/5 rounded-2xl p-2 overflow-hidden">
             <div class="flex items-baseline justify-between text-[10px] mb-0.5">
               <span class="text-emerald-400"><i class="fa-solid fa-arrow-up"></i> Up</span>
               <span id="sys-net-up" class="font-mono text-emerald-300 text-[10px]">0 KB/s</span>
             </div>
-            <canvas id="traffic-up-graph" width="120" height="26" class="w-full" style="border-radius: 3px;"></canvas>
+            <canvas id="traffic-up-graph" class="w-full h-5 sm:h-6 block" style="border-radius: 3px;"></canvas>
           </div>
 
           <!-- Traffic Down -->
-          <div class="bg-white/5 rounded-2xl p-2">
+          <div class="bg-white/5 rounded-2xl p-2 overflow-hidden">
             <div class="flex items-baseline justify-between text-[10px] mb-0.5">
               <span class="text-blue-400"><i class="fa-solid fa-arrow-down"></i> Down</span>
               <span id="sys-net-down" class="font-mono text-blue-300 text-[10px]">0 KB/s</span>
             </div>
-            <canvas id="traffic-down-graph" width="120" height="26" class="w-full" style="border-radius: 3px;"></canvas>
+            <canvas id="traffic-down-graph" class="w-full h-5 sm:h-6 block" style="border-radius: 3px;"></canvas>
           </div>
         </div>
       </div>
@@ -352,7 +365,7 @@
 
   <!-- Settings Modal -->
   <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-    <div class="glass rounded-3xl p-6 w-full max-w-md border border-white/10 text-white">
+    <div class="glass rounded-3xl p-4 sm:p-6 w-full max-w-md mx-3 sm:mx-auto border border-white/10 text-white max-h-[85vh] overflow-y-auto sm:max-h-none">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-xl font-semibold">Налаштування</h2>
         <button onclick="closeSettings()" class="text-2xl leading-none">&times;</button>
@@ -362,9 +375,9 @@
         <!-- Background -->
         <div>
           <label class="block text-sm mb-1 text-slate-400">URL фону (зображення)</label>
-          <div class="flex gap-2">
-            <input id="settings-bg" type="text" class="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm" placeholder="https://...">
-            <button onclick="applyBackgroundFromSettings()" class="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm">Застосувати</button>
+          <div class="flex gap-1 sm:gap-2">
+            <input id="settings-bg" type="text" class="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm placeholder:text-slate-400" placeholder="https://...">
+            <button onclick="applyBackgroundFromSettings()" class="px-2 sm:px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-xs sm:text-sm">Застосувати</button>
           </div>
           <div class="text-[10px] text-slate-500 mt-1">Залиште порожнім для без фону</div>
         </div>
@@ -412,15 +425,15 @@
         <!-- Weather City -->
         <div>
           <label class="block text-sm mb-1 text-slate-400">Місто для погоди (OpenWeatherMap)</label>
-          <input id="settings-weather-city" type="text" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm" placeholder="Kyiv">
+          <input id="settings-weather-city" type="text" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm placeholder:text-slate-400" placeholder="Kyiv">
           <div class="text-[10px] text-slate-500 mt-1">Наприклад: Kyiv, Lviv, "London, UK"</div>
         </div>
       </div>
 
-      <div class="flex gap-2 mt-6">
+      <div class="flex gap-1 sm:gap-2 mt-4 sm:mt-6">
         <button onclick="saveAndApplySettings()" class="flex-1 bg-white text-black rounded-2xl py-2 text-sm font-medium hover:bg-gray-200">Зберегти</button>
-        <button onclick="resetSettings()" class="px-4 bg-white/10 hover:bg-white/20 rounded-2xl text-sm">Скидання</button>
-        <button onclick="closeSettings()" class="px-4 bg-white/10 hover:bg-white/20 rounded-2xl text-sm">Закрити</button>
+        <button onclick="resetSettings()" class="px-3 sm:px-4 bg-white/10 hover:bg-white/20 rounded-2xl text-xs sm:text-sm">Скидання</button>
+        <button onclick="closeSettings()" class="px-3 sm:px-4 bg-white/10 hover:bg-white/20 rounded-2xl text-xs sm:text-sm">Закрити</button>
       </div>
     </div>
   </div>
@@ -887,7 +900,7 @@
       const dpr = window.devicePixelRatio || 1;
       let w = rect.width;
       let h = rect.height;
-      if (!w || !h) { w = 120; h = 26; }  // fallback for early render
+      if (!w || !h) { w = 100; h = 20; }  // fallback for early render
 
       canvas.width = w * dpr;
       canvas.height = h * dpr;

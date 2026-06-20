@@ -9,9 +9,10 @@ refresh_interval: 30          # seconds between health checks
 timeout: 5                    # default request timeout seconds
 
 # Weather (OpenWeatherMap)
+# To enable weather widget, get a free API key here: https://openweathermap.org/api
 weather:
-  openweather_api_key: ""     # ← встав сюди свій ключ з https://openweathermap.org/api
-  default_city: "Kyiv"
+  openweather_api_key: ""  # paste your key here
+  default_city: "Kyiv"     # can be any city, e.g. "Lviv", "London, UK"
 
 services:
   - name: "Мережа"

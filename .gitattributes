@@ -1,0 +1,15 @@
+# Auto normalize line endings
+* text=auto
+
+# Shell scripts LF
+*.sh text eol=lf
+
+# Batch and windows keep CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Keep markdown and configs normalized
+*.md text=auto
+*.yml text=auto
+*.yaml text=auto
+*.py text=auto
