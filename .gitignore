@@ -113,3 +113,8 @@ pyrightconfig.json
 # Keep example files
 !*.example
 !config/config.yml.example
+
+# AI personal knowledge file (for Grok / AI assistant only, never commit)
+AETHER_PROJECT_KNOWLEDGE.md
+.aether-knowledge*
+*AI_KNOWLEDGE*
