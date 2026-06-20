@@ -28,7 +28,7 @@ jobs:
           if [ -z "$VERSION" ]; then
             VERSION="dev"
           fi
-          echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Using version tag: $VERSION"
 
       - name: Log in to GHCR
@@ -47,8 +47,8 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=raw,value=latest
-            type=raw,value=${{ steps.get-version.outputs.VERSION }}
+            latest
+            ${{ steps.get-version.outputs.version }}
             type=sha,format=short
 
       - name: Build and push Docker image
