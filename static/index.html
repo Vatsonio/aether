@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aether • Sadova Network</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Space+Grotesk:wght@500;600&amp;display=swap');
+
+    :root {
+      --bg: #020617;
+      --glass: rgba(15, 23, 42, 0.55);
+      --accent: #6b7280;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+    }
+
+    body {
+      font-family: 'Inter', system_ui, sans-serif;
+      background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      padding-left: env(safe-area-inset-left, 0);
+      padding-right: env(safe-area-inset-right, 0);
+    }
+
+    /* Dark overlay for readability, like Homer/Heimdall */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.22);  /* background photo more prominent */
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    /* Mobile: make background static (scrolls with content) to avoid "image ends" bug when scrolling past viewport */
+    @media (max-width: 768px) {
+      body {
+        background-attachment: scroll;
+        background-position: top center;
+        background-size: cover;
+        background-repeat: no-repeat;
+        position: relative;
+      }
+
+      body::before {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+      }
+    }
+
+    .title-font {
+      font-family: 'Space Grotesk', 'Inter', sans-serif;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .glass {
+      background: var(--glass);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .card {
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .compact-mode .card {
+      padding: 0.5rem 0.75rem 0.35rem !important;
+      font-size: 0.9rem;
+    }
+
+    .compact-mode .status-dot {
+      width: 8px !important;
+      height: 8px !important;
+    }
+
+    /* Dark theme for settings dropdown - force dark */
+    #settings-modal select,
+    #settings-modal select option {
+      background-color: #1f2937 !important;
+      color: #f3f4f6 !important;
+      border-color: #4b5563 !important;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(148, 163, 184, 0.35);
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(148,163,184,0.08),
+        transparent
+      );
+      transition: 0.6s;
+    }
+
+    .card:hover::before {
+      left: 250%;
+    }
+
+    .section-header {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #f8fafc;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8);
+      opacity: 0.95;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 9999px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    /* Status indicators - colored for clarity */
+    .status-up {
+      background: #22c55e; /* green = online */
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.35);
+    }
+    .status-down {
+      background: #ef4444; /* red = offline */
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.35);
+    }
+    .status-unknown {
+      background: #64748b;
+      box-shadow: 0 0 0 2px rgba(100, 116, 139, 0.3);
+    }
+
+    .latency {
+      font-size: 0.75rem;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .service-icon {
+      font-size: 1.65rem;
+      line-height: 1;
+      transition: transform 0.2s ease;
+    }
+
+    .card:hover .service-icon {
+      transform: scale(1.1);
+    }
+
+    .nav-active {
+      background: rgba(148, 163, 184, 0.12);
+      color: #cbd5e1;
+    }
+
+    .metric {
+      font-size: 10px;
+      letter-spacing: 0.5px;
+    }
+
+    #app {
+      /* background now comes from body photo + overlay */
+      background: transparent;
+    }
+
+    .tag {
+      font-size: 10px;
+      padding: 1px 8px;
+      background: rgba(148,163,184,0.1);
+      color: #64748b;
+      border-radius: 999px;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-200" style="background: #020617;">
+  <div id="app" class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header id="main-header" class="sticky top-0 z-50 border-b border-white/10 bg-black/10 backdrop-blur-3xl supports-[backdrop-filter]:bg-black/10 transition-all duration-300" style="padding-top: max(env(safe-area-inset-top, 0px), 0px);">
+      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 py-2.5 sm:py-4 flex flex-wrap items-center justify-between gap-x-2 sm:gap-x-3 gap-y-1.5">
+        <div class="flex items-center gap-x-3">
+          <div class="flex items-center gap-x-2">
+            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-2xl bg-gradient-to-br from-slate-400 to-slate-500 flex items-center justify-center text-black">
+              <i class="fa-solid fa-infinity text-lg sm:text-xl"></i>
+            </div>
+            <div>
+              <h1 class="title-font text-2xl sm:text-3xl font-semibold tracking-tighter" id="title">Aether</h1>
+              <p class="text-[9px] sm:text-[10px] text-slate-400/80 -mt-1" id="subtitle">Sadova Network</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-x-2 sm:gap-x-3 flex-1 sm:flex-none justify-end">
+          <!-- Search -->
+          <div class="relative w-40 sm:w-56 md:w-72 flex-1 sm:flex-none">
+            <input 
+              id="search"
+              type="text" 
+              placeholder="Пошук..." 
+              class="w-full bg-white/5 border border-white/10 text-sm placeholder:text-slate-500 focus:outline-none focus:border-slate-400/50 rounded-2xl px-3 sm:px-4 py-1.5 sm:py-2 pl-8 sm:pl-10"
+            >
+            <i class="fa-solid fa-search absolute left-4 top-2.5 text-slate-500"></i>
+          </div>
+
+          <!-- Weather + Clock -->
+          <div class="flex items-center gap-x-2 sm:gap-x-3 text-sm sm:text-base">
+            <div id="weather" class="flex items-center gap-x-1.5 text-sm text-slate-300 hover:text-slate-100 cursor-pointer transition-colors" title="Погода (Київ)">
+              <span id="weather-icon" class="text-lg"></span>
+              <span id="weather-temp" class="font-medium"></span>
+            </div>
+            <div id="clock" class="font-mono text-base sm:text-lg font-semibold text-slate-100 tracking-[0.5px] tabular-nums"></div>
+          </div>
+
+          <button onclick="refreshAll()" 
+                  class="flex items-center gap-x-1.5 sm:gap-x-2 text-sm bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 transition-all active:scale-[0.985]"
+                  title="Оновити">
+            <i class="fa-solid fa-sync-alt"></i>
+          </button>
+
+          <button onclick="openSettings()" 
+                  class="flex items-center gap-x-1.5 sm:gap-x-2 text-sm bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl px-2.5 sm:px-3 py-1.5 sm:py-2 transition-all"
+                  title="Налаштування">
+            <i class="fa-solid fa-cog"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 max-w-screen-2xl mx-auto px-4 sm:px-6 py-5 sm:py-8 pb-6 sm:pb-12">
+      <!-- Server Status like other categories -->
+      <div>
+        <div class="flex items-center gap-x-3 mb-4 px-1">
+          <span class="text-xl">🖥️</span>
+          <div class="section-header">Статус сервера</div>
+          <div class="flex-1 h-px bg-white/20 ml-2"></div>
+        </div>
+
+        <!-- Mini Server Status Panel (glass content) -->
+        <div id="system-panel" class="glass rounded-3xl p-4 mb-6 hidden">
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-sm items-stretch">
+          <!-- CPU -->
+          <div class="bg-white/5 rounded-2xl p-2 h-full flex flex-col justify-center">
+            <div class="flex justify-between items-center mb-1">
+              <div class="flex items-center gap-x-1 text-slate-300">
+                <i class="fa-solid fa-microchip text-xs"></i>
+                <span class="text-[10px] font-medium">CPU</span>
+              </div>
+              <span id="sys-cpu" class="font-semibold tabular-nums">0%</span>
+            </div>
+            <div class="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div id="sys-cpu-bar" class="h-1.5 bg-emerald-400 rounded-full transition-all" style="width: 0%"></div>
+            </div>
+            <div class="text-[9px] text-slate-400 mt-0.5" id="sys-cpu-detail">0 / 0</div>
+          </div>
+
+          <!-- RAM -->
+          <div class="bg-white/5 rounded-2xl p-2 h-full flex flex-col justify-center">
+            <div class="flex justify-between items-center mb-1">
+              <div class="flex items-center gap-x-1 text-slate-300">
+                <i class="fa-solid fa-memory text-xs"></i>
+                <span class="text-[10px] font-medium">RAM</span>
+              </div>
+              <span id="sys-ram" class="font-semibold tabular-nums">0%</span>
+            </div>
+            <div class="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div id="sys-ram-bar" class="h-1.5 bg-emerald-400 rounded-full transition-all" style="width: 0%"></div>
+            </div>
+            <div class="text-[9px] text-slate-400 mt-0.5" id="sys-ram-detail">0 / 0 GB</div>
+          </div>
+
+          <!-- SSD -->
+          <div class="bg-white/5 rounded-2xl p-2 h-full flex flex-col justify-center">
+            <div class="flex justify-between items-center mb-1">
+              <div class="flex items-center gap-x-1 text-slate-300">
+                <i class="fa-solid fa-hdd text-xs"></i>
+                <span class="text-[10px] font-medium">SSD</span>
+              </div>
+              <span id="sys-disk" class="font-semibold tabular-nums">0%</span>
+            </div>
+            <div class="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div id="sys-disk-bar" class="h-1.5 bg-emerald-400 rounded-full transition-all" style="width: 0%"></div>
+            </div>
+            <div class="text-[9px] text-slate-400 mt-0.5" id="sys-disk-detail">0 GB free</div>
+          </div>
+
+          <!-- CPU Temp -->
+          <div class="bg-white/5 rounded-2xl p-2 h-full flex flex-col justify-center">
+            <div class="flex justify-between items-center mb-1">
+              <div class="flex items-center gap-x-1 text-slate-300">
+                <i class="fa-solid fa-thermometer-half text-xs"></i>
+                <span class="text-[10px] font-medium">Темп. CPU</span>
+              </div>
+              <span id="sys-temp" class="font-semibold tabular-nums">--°</span>
+            </div>
+            <div class="h-1.5 bg-white/10 rounded-full overflow-hidden">
+              <div id="sys-temp-bar" class="h-1.5 rounded-full transition-all" style="width: 0%"></div>
+            </div>
+            <div class="flex justify-between text-[9px] text-slate-500 mt-0.5">
+              <span>0°</span>
+              <span>100°</span>
+            </div>
+          </div>
+
+          <!-- Traffic Up -->
+          <div class="bg-white/5 rounded-2xl p-2">
+            <div class="flex items-baseline justify-between text-[10px] mb-0.5">
+              <span class="text-emerald-400"><i class="fa-solid fa-arrow-up"></i> Up</span>
+              <span id="sys-net-up" class="font-mono text-emerald-300 text-[10px]">0 KB/s</span>
+            </div>
+            <canvas id="traffic-up-graph" width="120" height="26" class="w-full" style="border-radius: 3px;"></canvas>
+          </div>
+
+          <!-- Traffic Down -->
+          <div class="bg-white/5 rounded-2xl p-2">
+            <div class="flex items-baseline justify-between text-[10px] mb-0.5">
+              <span class="text-blue-400"><i class="fa-solid fa-arrow-down"></i> Down</span>
+              <span id="sys-net-down" class="font-mono text-blue-300 text-[10px]">0 KB/s</span>
+            </div>
+            <canvas id="traffic-down-graph" width="120" height="26" class="w-full" style="border-radius: 3px;"></canvas>
+          </div>
+        </div>
+      </div>
+      </div>
+
+      <!-- Groups container -->
+      <div id="groups" class="space-y-10">
+        <!-- Populated by JS -->
+      </div>
+    </main>
+
+    <footer class="text-center pt-10 pb-6 text-xs text-slate-500 mt-auto">
+      Aether <span id="app-version"></span> • homelab dashboard • live status checks
+    </footer>
+  </div>
+
+  <!-- Settings Modal -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+    <div class="glass rounded-3xl p-6 w-full max-w-md border border-white/10 text-white">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold">Налаштування</h2>
+        <button onclick="closeSettings()" class="text-2xl leading-none">&times;</button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Background -->
+        <div>
+          <label class="block text-sm mb-1 text-slate-400">URL фону (зображення)</label>
+          <div class="flex gap-2">
+            <input id="settings-bg" type="text" class="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm" placeholder="https://...">
+            <button onclick="applyBackgroundFromSettings()" class="px-3 py-2 bg-white/10 hover:bg-white/20 rounded-xl text-sm">Застосувати</button>
+          </div>
+          <div class="text-[10px] text-slate-500 mt-1">Залиште порожнім для без фону</div>
+        </div>
+
+        <!-- Refresh (services) -->
+        <div>
+          <label class="block text-sm mb-1 text-slate-400">Оновлення сервісів (сек)</label>
+          <input id="settings-interval" type="number" min="5" max="300" step="1" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm">
+          <div class="text-[10px] text-slate-500 mt-0.5">Статус карток (кешується на бекенді)</div>
+        </div>
+
+        <!-- System metrics (fast) -->
+        <div>
+          <label class="block text-sm mb-1 text-slate-400">Оновлення метрик сервера (сек)</label>
+          <input id="settings-system-interval" type="number" min="0.5" max="10" step="0.5" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm">
+          <div class="text-[10px] text-slate-500 mt-0.5">CPU / RAM / Трафік / Температура — можна 0.5–2с</div>
+        </div>
+
+        <!-- Toggles -->
+        <div class="space-y-2">
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input id="settings-latency" type="checkbox" class="accent-white">
+            <span>Показувати час відповіді (latency)</span>
+          </label>
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input id="settings-compact" type="checkbox" class="accent-white">
+            <span>Компактний режим (менші картки)</span>
+          </label>
+          <label class="flex items-center gap-2 text-sm cursor-pointer">
+            <input id="settings-autorefresh" type="checkbox" class="accent-white">
+            <span>Авто-оновлення</span>
+          </label>
+        </div>
+
+        <!-- Dot size -->
+        <div>
+          <label class="block text-sm mb-1 text-slate-400">Розмір індикатора статусу</label>
+          <select id="settings-dotsize" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm">
+            <option value="small">Маленький</option>
+            <option value="medium">Середній</option>
+            <option value="large">Великий</option>
+          </select>
+        </div>
+
+        <!-- Weather City -->
+        <div>
+          <label class="block text-sm mb-1 text-slate-400">Місто для погоди (OpenWeatherMap)</label>
+          <input id="settings-weather-city" type="text" class="w-full bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm" placeholder="Kyiv">
+          <div class="text-[10px] text-slate-500 mt-1">Наприклад: Kyiv, Lviv, "London, UK"</div>
+        </div>
+      </div>
+
+      <div class="flex gap-2 mt-6">
+        <button onclick="saveAndApplySettings()" class="flex-1 bg-white text-black rounded-2xl py-2 text-sm font-medium hover:bg-gray-200">Зберегти</button>
+        <button onclick="resetSettings()" class="px-4 bg-white/10 hover:bg-white/20 rounded-2xl text-sm">Скидання</button>
+        <button onclick="closeSettings()" class="px-4 bg-white/10 hover:bg-white/20 rounded-2xl text-sm">Закрити</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let config = null;
+    let statusData = { items: {}, last_global_check: 0 };
+    let searchTerm = '';
+
+    // Settings
+    let settings = {
+      bgUrl: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=80',
+      refreshInterval: 30,
+      systemRefreshInterval: 2,     // seconds for CPU/RAM/traffic graphs (can be 0.5)
+      showLatency: true,
+      compact: false,
+      dotSize: 'medium',
+      autoRefresh: true,
+      weatherCity: 'Kyiv'
+    };
+
+    let pollTimer = null;
+    let systemTimer = null;
+
+    // Traffic graphs history — larger for fast updates
+    let trafficUpHistory = [];
+    let trafficDownHistory = [];
+    const MAX_TRAFFIC_POINTS = 120; // supports 0.5s updates for ~60s history, or 2s for ~4min
+
+    function loadSettings() {
+      try {
+        const saved = localStorage.getItem('aether_settings');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          settings = { ...settings, ...parsed };
+          // normalize fast system interval (support 0.5s+)
+          if (typeof settings.systemRefreshInterval === 'number') {
+            settings.systemRefreshInterval = Math.max(0.5, Math.min(30, settings.systemRefreshInterval));
+          }
+        }
+      } catch (e) {}
+    }
+
+    function saveSettings() {
+      localStorage.setItem('aether_settings', JSON.stringify(settings));
+    }
+
+    function applySettings() {
+      // Background
+      if (settings.bgUrl) {
+        document.body.style.backgroundImage = `url(${settings.bgUrl})`;
+      } else {
+        document.body.style.backgroundImage = '';
+      }
+
+      // Dot size
+      const dotSizeMap = { small: '8px', medium: '10px', large: '13px' };
+      const size = dotSizeMap[settings.dotSize] || '10px';
+      document.querySelectorAll('.status-dot').forEach(el => {
+        el.style.width = size;
+        el.style.height = size;
+      });
+
+      // Add/remove compact class on body for global tweaks
+      if (settings.compact) {
+        document.body.classList.add('compact-mode');
+      } else {
+        document.body.classList.remove('compact-mode');
+      }
+
+      // Re-render for compact / latency
+      if (config) renderGroups();
+
+      // Restart polling (services + system metrics separately)
+      if (settings.autoRefresh) {
+        startPolling();
+        startSystemPolling();
+      } else {
+        if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+        if (systemTimer) { clearInterval(systemTimer); systemTimer = null; }
+      }
+    }
+
+    function openSettings() {
+      const modal = document.getElementById('settings-modal');
+      document.getElementById('settings-bg').value = settings.bgUrl || '';
+      document.getElementById('settings-interval').value = settings.refreshInterval;
+      const sysEl = document.getElementById('settings-system-interval');
+      if (sysEl) sysEl.value = settings.systemRefreshInterval || 2;
+      document.getElementById('settings-latency').checked = settings.showLatency;
+      document.getElementById('settings-compact').checked = settings.compact;
+      document.getElementById('settings-autorefresh').checked = settings.autoRefresh;
+      document.getElementById('settings-dotsize').value = settings.dotSize;
+      const defaultCity = (config && config.weather && config.weather.default_city) || 'Kyiv';
+      document.getElementById('settings-weather-city').value = settings.weatherCity || defaultCity;
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeSettings() {
+      const modal = document.getElementById('settings-modal');
+      modal.classList.remove('flex');
+      modal.classList.add('hidden');
+    }
+
+    function applyBackgroundFromSettings() {
+      const val = document.getElementById('settings-bg').value.trim();
+      settings.bgUrl = val;
+      applySettings();
+    }
+
+    function saveAndApplySettings() {
+      settings.bgUrl = document.getElementById('settings-bg').value.trim();
+      settings.refreshInterval = parseInt(document.getElementById('settings-interval').value) || 30;
+      const sysRaw = parseFloat(document.getElementById('settings-system-interval').value);
+      settings.systemRefreshInterval = (isNaN(sysRaw) ? 2 : Math.max(0.5, Math.min(30, sysRaw)));
+      settings.showLatency = document.getElementById('settings-latency').checked;
+      settings.compact = document.getElementById('settings-compact').checked;
+      settings.autoRefresh = document.getElementById('settings-autorefresh').checked;
+      settings.dotSize = document.getElementById('settings-dotsize').value;
+      const defaultCity = (config && config.weather && config.weather.default_city) || 'Kyiv';
+      settings.weatherCity = document.getElementById('settings-weather-city').value.trim() || defaultCity;
+
+      saveSettings();
+      applySettings();
+      updateWeather();   // refresh weather with new city
+      closeSettings();
+    }
+
+    function resetSettings() {
+      localStorage.removeItem('aether_settings');
+      location.reload(); // simple reset
+    }
+
+    function startPolling() {
+      if (pollTimer) clearInterval(pollTimer);
+      if (!settings.autoRefresh) return;
+
+      const ms = (settings.refreshInterval || 30) * 1000;
+      pollTimer = setInterval(fetchStatus, ms);
+    }
+
+    function startSystemPolling() {
+      if (systemTimer) clearInterval(systemTimer);
+      if (!settings.autoRefresh) return;
+
+      // System metrics (CPU/RAM/temp/traffic) can update much faster
+      const sysSec = (settings.systemRefreshInterval || 2);
+      const ms = Math.max(400, Math.floor(sysSec * 1000)); // safety floor ~0.4s
+      systemTimer = setInterval(updateSystem, ms);
+    }
+
+    function updateHeader() {
+      document.getElementById('title').textContent = config?.title || 'Aether';
+      document.getElementById('subtitle').textContent = config?.subtitle || 'Homelab';
+    }
+
+    async function loadVersion() {
+      try {
+        const res = await fetch('/api/version');
+        const data = await res.json();
+        const el = document.getElementById('app-version');
+        if (el && data.version) {
+          el.textContent = data.version;
+        }
+      } catch (e) {
+        // silent fallback
+      }
+    }
+
+    function createCard(item, status) {
+      const st = status || { status: 'unknown', latency_ms: null, error: null };
+      const isUp = st.status === 'up';
+      const isDown = st.status === 'down';
+      const latency = st.latency_ms ? `${st.latency_ms}ms` : '';
+
+      const iconHtml = item.icon && item.icon.length < 4 
+        ? `<span class="service-icon inline-flex items-center justify-center align-middle" style="line-height:1; height:1.65rem; width:1.65rem;">${item.icon}</span>` 
+        : `<i class="fa-solid fa-link service-icon text-slate-400"></i>`;
+
+      const statusClass = isUp ? 'status-up' : isDown ? 'status-down' : 'status-unknown';
+
+      const tagsHtml = (item.tags || []).map(t => `<span class="tag">${t}</span>`).join('');
+
+      const cardPadding = settings.compact 
+        ? 'px-3 pt-3 pb-2 text-sm' 
+        : 'px-3 sm:px-4 pt-3 sm:pt-4 pb-2 sm:pb-3';
+      const showLat = settings.showLatency !== false;
+
+      return `
+        <a href="${item.url}" target="_blank" 
+           class="card group block glass rounded-3xl ${cardPadding} border border-white/10 hover:border-slate-400/40 no-underline">
+          
+          <div class="relative">
+            <div class="flex items-start gap-3 pr-6">
+              <div class="flex items-center gap-x-2 sm:gap-x-3 flex-1 min-w-0">
+                <div class="w-11 h-11 flex items-center justify-center rounded-2xl bg-white/5 flex-shrink-0 overflow-hidden leading-none">
+                  ${iconHtml}
+                </div>
+                <div class="min-w-0">
+                  <div class="flex items-center gap-x-2">
+                    <div class="font-semibold text-base sm:text-lg leading-none tracking-tight text-white group-hover:text-slate-300 transition-colors truncate">
+                      ${item.name}
+                    </div>
+                  </div>
+                  <div class="text-xs sm:text-sm text-slate-400 mt-0.5 sm:mt-1 truncate">${item.subtitle || ''}</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Status dot perfectly right-aligned inside the block -->
+            <div class="absolute top-1 right-1">
+              <div class="status-dot ${statusClass}" title="${isUp ? 'Online' : isDown ? 'Offline' : 'Unknown'}"></div>
+            </div>
+          </div>
+
+          <div class="mt-1.5 flex items-center justify-between text-xs min-h-[0.9rem] leading-tight">
+            <div class="flex gap-x-1.5 flex-wrap">
+              ${tagsHtml}
+            </div>
+
+            ${(st.error || (showLat && latency)) ? `
+            <div class="text-right min-w-0">
+              ${st.error 
+                ? `<div class="text-[10px] text-red-400/80 truncate" title="${st.error}">${st.error}</div>` 
+                : `<div class="latency text-slate-300/90 font-mono">${latency}</div>`
+              }
+            </div>` : ''}
+          </div>
+        </a>
+      `;
+    }
+
+    function renderGroups(filteredGroups = null) {
+      const container = document.getElementById('groups');
+      container.innerHTML = '';
+
+      const groups = filteredGroups || config.services;
+
+      groups.forEach(group => {
+        const items = group.items || [];
+        const filteredItems = items.filter(item => {
+          if (!searchTerm) return true;
+          const q = searchTerm.toLowerCase();
+          return item.name.toLowerCase().includes(q) ||
+                 item.subtitle.toLowerCase().includes(q) ||
+                 (item.tags || []).some(t => t.toLowerCase().includes(q));
+        });
+
+        if (filteredItems.length === 0) return;
+
+        const groupHTML = `
+          <div>
+            <div class="flex items-center gap-x-2 sm:gap-x-3 mb-3 sm:mb-4 px-1">
+              <span class="text-xl opacity-90">${group.icon || '📁'}</span>
+              <div class="section-header">${group.name}</div>
+              <div class="flex-1 h-px bg-white/20 ml-2"></div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2 sm:gap-3 items-start">
+              ${filteredItems.map(item => {
+                const status = statusData.items[item.name];
+                return createCard(item, status);
+              }).join('')}
+            </div>
+          </div>
+        `;
+        container.insertAdjacentHTML('beforeend', groupHTML);
+      });
+    }
+
+    async function fetchConfig() {
+      try {
+        const res = await fetch('/api/config');
+        config = await res.json();
+        updateHeader();
+      } catch (e) {
+        console.error('Failed to load config', e);
+      }
+    }
+
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/status');
+        statusData = await res.json();
+
+        renderGroups();
+        // System metrics now have their own fast dedicated poller (see startSystemPolling)
+      } catch (e) {
+        console.error('Status fetch failed', e);
+      }
+    }
+
+    async function refreshAll() {
+      const btns = document.querySelectorAll('button');
+      btns.forEach(b => b.disabled = true);
+      
+      try {
+        await fetch('/api/refresh', { method: 'POST' });
+        await fetchStatus();
+        await updateSystem();  // force fresh metrics on manual refresh
+      } finally {
+        btns.forEach(b => b.disabled = false);
+      }
+    }
+
+    function setupSearch() {
+      const input = document.getElementById('search');
+      
+      input.addEventListener('input', (e) => {
+        searchTerm = e.target.value.trim();
+        if (config) {
+          renderGroups();
+        }
+      });
+
+      // Keyboard shortcut
+      document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && document.activeElement.tagName === 'BODY') {
+          e.preventDefault();
+          input.focus();
+          input.select();
+        }
+        if (e.key === 'Escape' && document.activeElement === input) {
+          searchTerm = '';
+          input.value = '';
+          renderGroups();
+        }
+      });
+    }
+
+    async function init() {
+      loadSettings();
+
+      // Tailwind script run
+      document.documentElement.style.setProperty('--accent', '#64748b');
+
+      // Apply initial settings (bg, sizes etc)
+      applySettings();
+
+      await fetchConfig();
+      await fetchStatus();
+      
+      setupSearch();
+      startPolling();
+      startSystemPolling();
+
+      loadVersion();  // load V<gen>.<commit> from backend
+
+      // Initial system stats (will also be driven by dedicated fast timer)
+      updateSystem();
+
+      // Bonus: press ? to show help
+      document.addEventListener('keydown', function(e) {
+        if (e.key === '?') {
+          alert('Aether — шорткати:\n/ — фокус пошуку\nEsc — очистити пошук\nКлік по картці відкриває сервіс\nНалаштування — шестерня');
+        }
+      });
+
+      // Re-apply after render for dots
+      setTimeout(() => applySettings(), 500);
+
+      // Transparent glass navbar with scroll effect (best practice)
+      setupHeaderScroll();
+
+      console.log('%c[Aether] Dashboard initialized autonomously', 'color:#64748b');
+
+      // Clock and Weather
+      updateClock();
+      setInterval(updateClock, 30000); // every 30s is enough for readable clock
+
+      updateWeather();
+      setInterval(updateWeather, 30 * 60 * 1000); // every 30 min
+
+      // Click on weather to refresh
+      const weatherEl = document.getElementById('weather');
+      if (weatherEl) {
+        weatherEl.addEventListener('click', updateWeather);
+      }
+    }
+
+    function setupHeaderScroll() {
+      const header = document.getElementById('main-header');
+      if (!header) return;
+
+      const onScroll = () => {
+        if (window.scrollY > 20) {
+          header.classList.remove('bg-black/10');
+          header.classList.add('bg-black/40', 'backdrop-blur-3xl');
+        } else {
+          header.classList.remove('bg-black/40');
+          header.classList.add('bg-black/10');
+        }
+      };
+
+      window.addEventListener('scroll', onScroll, { passive: true });
+      onScroll(); // run once on load
+    }
+
+    function updateClock() {
+      const clockEl = document.getElementById('clock');
+      if (!clockEl) return;
+      const now = new Date();
+      // More readable format
+      const timeStr = now.toLocaleTimeString('uk-UA', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      clockEl.textContent = timeStr;
+    }
+
+    async function updateWeather() {
+      const iconEl = document.getElementById('weather-icon');
+      const tempEl = document.getElementById('weather-temp');
+      const weatherEl = document.getElementById('weather');
+      if (!iconEl || !tempEl || !weatherEl) return;
+
+      iconEl.textContent = '⏳';
+      tempEl.textContent = '';
+
+      try {
+        const city = settings.weatherCity || (config?.weather?.default_city) || 'Kyiv';
+        const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
+        const data = await res.json();
+
+        if (data.error) {
+          iconEl.textContent = '⚠️';
+          tempEl.textContent = '--°';
+          weatherEl.title = data.error;
+          return;
+        }
+
+        // Map OpenWeather icon code to emoji
+        const iconMap = {
+          '01d': '☀️', '01n': '🌙',
+          '02d': '🌤️', '02n': '☁️',
+          '03d': '⛅', '03n': '☁️',
+          '04d': '☁️', '04n': '☁️',
+          '09d': '🌧️', '09n': '🌧️',
+          '10d': '🌦️', '10n': '🌧️',
+          '11d': '⛈️', '11n': '⛈️',
+          '13d': '❄️', '13n': '❄️',
+          '50d': '🌫️', '50n': '🌫️'
+        };
+
+        const emoji = iconMap[data.icon] || '🌡️';
+
+        iconEl.textContent = emoji;
+        tempEl.textContent = `${data.temp}°`;
+
+        weatherEl.title = `${data.description} у ${data.city}`;
+      } catch (err) {
+        iconEl.textContent = '🌡️';
+        tempEl.textContent = '--°';
+        weatherEl.title = 'Помилка завантаження погоди';
+      }
+    }
+
+    function drawTrafficGraph(canvasId, data, color) {
+      const canvas = document.getElementById(canvasId);
+      if (!canvas || !data || data.length < 2) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      let w = rect.width;
+      let h = rect.height;
+      if (!w || !h) { w = 120; h = 26; }  // fallback for early render
+
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + 'px';
+      canvas.style.height = h + 'px';
+
+      const ctx = canvas.getContext('2d');
+      ctx.scale(dpr, dpr);
+
+      ctx.clearRect(0, 0, w, h);
+
+      // No background fill — fully transparent over parent glass layer
+
+      // Ultra faint guide lines (minimal, 2 lines)
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.025)';
+      ctx.lineWidth = 0.5;
+      for (let i = 1; i < 3; i++) {
+        const y = (h / 3) * i;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(w, y);
+        ctx.stroke();
+      }
+
+      const maxVal = Math.max(...data, 1);
+
+      // Very transparent gradient fill (almost invisible area)
+      const gradient = ctx.createLinearGradient(0, 0, 0, h);
+      gradient.addColorStop(0, color + '18');
+      gradient.addColorStop(1, color + '00');
+
+      // Cool subtle line: thin + low opacity + soft glow
+      ctx.strokeStyle = color + '99';
+      ctx.lineWidth = 1.3;
+      ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.shadowBlur = 1.5;
+      ctx.shadowColor = color + '33';
+
+      ctx.beginPath();
+      for (let i = 0; i < data.length; i++) {
+        const x = (i / (data.length - 1)) * w;
+        const y = h - (data[i] / maxVal) * (h * 0.82) - 0.5;
+
+        if (i === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          const prevX = ((i - 1) / (data.length - 1)) * w;
+          const prevY = h - (data[i-1] / maxVal) * (h * 0.78) - 1;
+          const cpX = (prevX + x) / 2;
+          ctx.quadraticCurveTo(cpX, prevY, x, y);
+        }
+      }
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+
+      // Very subtle transparent area fill
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = gradient;
+      ctx.fill();
+
+      // Tiny end dot — faint white + colored core
+      const lastX = w - 0.5;
+      const lastY = h - (data[data.length-1] / maxVal) * (h * 0.82) - 0.5;
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.arc(lastX, lastY, 0.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    async function updateSystem() {
+      const panel = document.getElementById('system-panel');
+      if (!panel) return;
+
+      try {
+        const res = await fetch('/api/system');
+        const data = await res.json();
+
+        if (data.error || !data) {
+          panel.classList.add('hidden');
+          return;
+        }
+
+        panel.classList.remove('hidden');
+
+        // CPU
+        const cpuVal = document.getElementById('sys-cpu');
+        const cpuBar = document.getElementById('sys-cpu-bar');
+        const cpuDetail = document.getElementById('sys-cpu-detail');
+        if (cpuVal && cpuBar) {
+          cpuVal.textContent = `${data.cpu_percent}%`;
+          cpuBar.style.width = `${data.cpu_percent}%`;
+          cpuBar.style.backgroundColor = data.cpu_percent > 80 ? '#f87171' : '#34d399';
+        }
+        if (cpuDetail && data.cpu_used_cores !== undefined && data.cpu_cores) {
+          cpuDetail.textContent = `${data.cpu_used_cores} / ${data.cpu_cores}`;
+        } else if (cpuDetail && data.cpu_cores) {
+          cpuDetail.textContent = `${data.cpu_cores}`;
+        }
+
+        // RAM
+        const ramVal = document.getElementById('sys-ram');
+        const ramBar = document.getElementById('sys-ram-bar');
+        const ramDetail = document.getElementById('sys-ram-detail');
+        if (ramVal && ramBar && ramDetail) {
+          ramVal.textContent = `${data.ram_percent}%`;
+          ramBar.style.width = `${data.ram_percent}%`;
+          ramBar.style.backgroundColor = data.ram_percent > 85 ? '#f87171' : '#34d399';
+          ramDetail.textContent = `${data.ram_used_gb} / ${data.ram_total_gb} GB`;
+        }
+
+        // Disk / SSD
+        const diskVal = document.getElementById('sys-disk');
+        const diskBar = document.getElementById('sys-disk-bar');
+        const diskDetail = document.getElementById('sys-disk-detail');
+        if (diskVal && diskBar && diskDetail && data.disk_percent !== null) {
+          diskVal.textContent = `${data.disk_percent}%`;
+          diskBar.style.width = `${data.disk_percent}%`;
+          diskBar.style.backgroundColor = data.disk_percent > 85 ? '#f87171' : '#34d399';
+          diskDetail.textContent = `${data.disk_free_gb} GB free`;
+        } else if (diskDetail) {
+          diskDetail.textContent = 'N/A';
+        }
+
+        // CPU Temp
+        const tempVal = document.getElementById('sys-temp');
+        const tempBar = document.getElementById('sys-temp-bar');
+        if (tempVal) {
+          const t = data.cpu_temp || 0;
+          tempVal.textContent = data.cpu_temp ? `${t}°` : '--°';
+          if (tempBar) {
+            const tempPercent = Math.max(0, Math.min(100, (t / 100) * 100));
+            tempBar.style.width = `${tempPercent}%`;
+            // Color based on temp (like other bars)
+            let tempColor = '#34d399';
+            if (t >= 80) tempColor = '#f87171';
+            else if (t >= 60) tempColor = '#fbbf24';
+            tempBar.style.backgroundColor = tempColor;
+          }
+        }
+
+        // Traffic - auto unit
+        const upVal = document.getElementById('sys-net-up');
+        const downVal = document.getElementById('sys-net-down');
+
+        const formatTraffic = (kbps) => {
+          if (kbps >= 1024) {
+            return (kbps / 1024).toFixed(1) + ' MB/s';
+          }
+          return kbps.toFixed(1) + ' KB/s';
+        };
+
+        if (upVal) upVal.textContent = formatTraffic(data.net_up_kbps);
+        if (downVal) downVal.textContent = formatTraffic(data.net_down_kbps);
+
+        // Update history and draw graphs (light EMA smoothing for high-rate 0.5s updates)
+        const ema = (prev, val, a=0.35) => prev == null ? val : (prev * (1-a) + val * a);
+        const lastUp = trafficUpHistory.length ? trafficUpHistory[trafficUpHistory.length-1] : null;
+        const lastDown = trafficDownHistory.length ? trafficDownHistory[trafficDownHistory.length-1] : null;
+        const smoothUp = ema(lastUp, data.net_up_kbps || 0);
+        const smoothDown = ema(lastDown, data.net_down_kbps || 0);
+        trafficUpHistory.push(smoothUp);
+        trafficDownHistory.push(smoothDown);
+        if (trafficUpHistory.length > MAX_TRAFFIC_POINTS) {
+          trafficUpHistory.shift();
+          trafficDownHistory.shift();
+        }
+        drawTrafficGraph('traffic-up-graph', trafficUpHistory, '#22c55e');
+        drawTrafficGraph('traffic-down-graph', trafficDownHistory, '#3b82f6');
+
+      } catch (e) {
+        const panel = document.getElementById('system-panel');
+        if (panel) panel.classList.add('hidden');
+      }
+    }
+
+    // Boot
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

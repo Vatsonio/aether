@@ -1,0 +1,134 @@
+# Aether — Sadova Network Dashboard Config
+# Modern homelab start page with live status
+
+title: "Aether"
+subtitle: "Sadova Network • homelab"
+
+# Global settings
+refresh_interval: 30          # seconds between health checks
+timeout: 5                    # default request timeout seconds
+
+# Weather (OpenWeatherMap)
+weather:
+  openweather_api_key: ""     # ← встав сюди свій ключ з https://openweathermap.org/api
+  default_city: "Kyiv"
+
+services:
+  - name: "Мережа"
+    icon: "🌐"
+    items:
+      - name: "OpenWrt"
+        subtitle: "192.168.31.1 • Головний роутер"
+        url: "http://192.168.31.1"
+        icon: "📡"
+        status:
+          type: "http"
+          url: "http://192.168.31.1"
+          interval: 20
+        tags: ["router", "gateway"]
+
+      - name: "Aruba Switch"
+        subtitle: "192.168.31.6 • 48 порт"
+        url: "http://192.168.31.6"
+        icon: "🔌"
+        status:
+          type: "http"
+          url: "http://192.168.31.6"
+        tags: ["switch", "network"]
+
+      - name: "Aruba AP1"
+        subtitle: "192.168.31.109 • VC"
+        url: "https://192.168.31.109:4343"
+        icon: "📶"
+        status:
+          type: "http"
+          url: "https://192.168.31.109:4343"
+          accept_status: [200, 301, 302, 401, 403]
+          insecure: true
+          timeout: 8
+        tags: ["wifi", "ap"]
+
+      - name: "Aruba AP2"
+        subtitle: "192.168.31.110 • AP-305"
+        url: "https://192.168.31.110:4343"
+        icon: "📶"
+        status:
+          type: "http"
+          url: "https://192.168.31.110:4343"
+          accept_status: [200, 301, 302, 401, 403]
+          insecure: true
+          timeout: 8
+        tags: ["wifi", "ap"]
+
+  - name: "Сервери"
+    icon: "🖥️"
+    items:
+      - name: "Proxmox"
+        subtitle: "192.168.31.2:8006 • Hypervisor"
+        url: "https://192.168.31.2:8006"
+        icon: "🧱"
+        status:
+          type: "http"
+          url: "https://192.168.31.2:8006"
+          insecure: true
+          accept_status: [200, 301, 302, 401, 403]
+          timeout: 8
+        tags: ["pve", "vm"]
+
+      - name: "Portainer"
+        subtitle: "192.168.31.5:9443 • Docker (HTTPS)"
+        url: "https://192.168.31.5:9443"
+        icon: "🐳"
+        status:
+          type: "http"
+          url: "https://192.168.31.5:9443"
+          insecure: true
+          accept_status: [200, 301, 302, 401, 403]
+        tags: ["docker"]
+
+  - name: "Відео та спостереження"
+    icon: "📹"
+    items:
+      - name: "Frigate"
+        subtitle: "192.168.31.5:5000 • AI NVR"
+        url: "http://192.168.31.5:5000"
+        icon: "🎥"
+        status:
+          type: "http"
+          url: "http://192.168.31.5:5000"
+        tags: ["camera", "nvr"]
+
+      - name: "CAM1"
+        subtitle: "192.168.30.21 • VLAN 30"
+        url: "http://192.168.31.5:5000/#cam1"
+        icon: "fa-solid fa-camera"
+        status:
+          type: "ping"
+          host: "192.168.30.21"
+          port: 80
+          timeout: 5
+        tags: ["camera"]
+
+      - name: "CAM2"
+        subtitle: "192.168.30.20 • VLAN 30"
+        url: "http://192.168.31.5:5000/#cam2"
+        icon: "fa-solid fa-camera"
+        status:
+          type: "ping"
+          host: "192.168.30.20"
+          port: 80
+          timeout: 5
+        tags: ["camera"]
+
+  - name: "Розумний дім"
+    icon: "🏠"
+    items:
+      - name: "Home Assistant"
+        subtitle: "Coming soon • ha.lab"
+        url: "http://192.168.31.5:8123"
+        icon: "🏡"
+        status:
+          type: "http"
+          url: "http://192.168.31.5:8123"
+        enabled: false
+        tags: ["automation"]
