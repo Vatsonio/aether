@@ -24,8 +24,12 @@ jobs:
       - name: Read VERSION file
         id: get-version
         run: |
-          VERSION=$(cat VERSION | tr -d '\n\r\t ')
+          VERSION=$(cat VERSION 2>/dev/null | tr -d '\n\r\t ' || true)
+          if [ -z "$VERSION" ]; then
+            VERSION="dev"
+          fi
           echo "VERSION=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Using version tag: $VERSION"
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
