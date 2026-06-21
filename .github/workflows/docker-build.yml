@@ -5,6 +5,11 @@ on:
     branches: [ "main" ]
   workflow_dispatch:
 
+# Note on deprecations:
+# - Node 20 deprecation on GitHub runners (now defaults to 24). Docker actions updated to latest (v6+).
+# - punycode warning is from internal JS deps in actions/runners, non-fatal.
+# Tag generation is now manual to avoid metadata-action producing invalid tags like ":-V1.x"
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
