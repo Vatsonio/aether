@@ -13,3 +13,6 @@
 *.yml text=auto
 *.yaml text=auto
 *.py text=auto
+
+# VERSION must stay plain ASCII/LF (never UTF-16) so the app and CI can read it
+VERSION text eol=lf

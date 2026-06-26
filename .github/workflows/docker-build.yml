@@ -26,25 +26,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Read VERSION file
-        id: get-version
-        run: |
-          VERSION=$(cat VERSION 2>/dev/null | tr -d '\n\r\t ' || true)
-          if [ -z "$VERSION" ]; then
-            VERSION="dev"
-          fi
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "Using version tag: $VERSION"
-
       - name: Prepare tags
         id: prepare-tags
         run: |
-          VERSION=$(cat VERSION 2>/dev/null | tr -d '\n\r\t ' || true)
+          # Sanitize VERSION to a valid Docker tag charset ([A-Za-z0-9._-]).
+          # This strips a UTF-8 BOM, UTF-16 NUL bytes and any stray whitespace,
+          # so a mis-encoded VERSION file can never produce an invalid tag.
+          VERSION=$(tr -cd 'A-Za-z0-9._-' < VERSION 2>/dev/null || true)
           if [ -z "$VERSION" ]; then
             VERSION="dev"
           fi
-          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
-          TAGS="ghcr.io/vatsonio/aether:latest,ghcr.io/vatsonio/aether:$VERSION,ghcr.io/vatsonio/aether:sha-$SHORT_SHA"
+          SHORT_SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
+          # Docker registry references must be lowercase (github.repository may contain capitals).
+          IMAGE=$(echo "${REGISTRY}/${IMAGE_NAME}" | tr '[:upper:]' '[:lower:]')
+          TAGS="${IMAGE}:latest,${IMAGE}:${VERSION},${IMAGE}:sha-${SHORT_SHA}"
           echo "tags=$TAGS" >> "$GITHUB_OUTPUT"
           echo "Using tags: $TAGS"
 

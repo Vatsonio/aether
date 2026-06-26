@@ -15,11 +15,7 @@ services:
       # Recommended: pass OpenWeather key via environment (Portainer env vars or .env file)
       # - OPENWEATHER_API_KEY=your_key_here
       # - WEATHER_DEFAULT_CITY=Kyiv
-```
-
-Now, update the README to explain the new way.
-
-First, find the relevant part in README.    healthcheck:
+    healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:80/health')"]
       interval: 30s
       timeout: 5s

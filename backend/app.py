@@ -181,9 +181,7 @@ class HealthEngine:
     async def check_item(self, item: ServiceItem) -> ItemStatus:
         if not item.status:
             return ItemStatus(name=item.name, status="unknown")
-        if item.status.type == "http":
-            return await self.check_http(item, item.status)
-        elif item.status.type == "ping":
+        if item.status.type in ("ping", "tcp"):
             return await self.check_ping(item, item.status)
         else:
             return await self.check_http(item, item.status)
@@ -305,9 +303,23 @@ def load_config() -> AppConfig:
 
 
 # App
-# Version is managed manually per commit rules (see README)
-# Format: V<generation>.<commit_count>
-APP_VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+# Version is managed per commit rules (see README): V<generation>.<commit_count>
+def _read_version() -> str:
+    """Read VERSION robustly. Tolerates a UTF-8 BOM / UTF-16 encoding and a
+    missing file so a malformed version string can never crash startup."""
+    version_file = ROOT / "VERSION"
+    for encoding in ("utf-8-sig", "utf-16"):
+        try:
+            text = version_file.read_text(encoding=encoding)
+            cleaned = text.replace("\x00", "").strip()
+            if cleaned:
+                return cleaned
+        except (FileNotFoundError, UnicodeError, OSError):
+            continue
+    return "dev"
+
+
+APP_VERSION = _read_version()
 app = FastAPI(title="Aether", version=APP_VERSION)
 
 app.add_middleware(
