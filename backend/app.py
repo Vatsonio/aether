@@ -6,6 +6,7 @@ Autonomous implementation: FastAPI + live server-side health checks + beautiful 
 import asyncio
 import os
 import time
+from contextlib import asynccontextmanager
 from typing import Literal, Optional, List, Dict, Any
 from pathlib import Path
 
@@ -320,7 +321,34 @@ def _read_version() -> str:
 
 
 APP_VERSION = _read_version()
-app = FastAPI(title="Aether", version=APP_VERSION)
+
+config = load_config()
+engine = HealthEngine(config)
+
+
+async def periodic_checks():
+    while True:
+        await asyncio.sleep(max(10, config.refresh_interval))
+        await engine.run_checks()
+
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    # Startup: run initial checks, then keep refreshing in the background.
+    await engine.run_checks()
+    task = asyncio.create_task(periodic_checks())
+    try:
+        yield
+    finally:
+        # Shutdown: stop the background loop cleanly.
+        task.cancel()
+        try:
+            await task
+        except asyncio.CancelledError:
+            pass
+
+
+app = FastAPI(title="Aether", version=APP_VERSION, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -328,22 +356,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-config = load_config()
-engine = HealthEngine(config)
-
-# Background health loop
-@app.on_event("startup")
-async def startup():
-    # Initial checks
-    await engine.run_checks()
-    asyncio.create_task(periodic_checks())
-
-
-async def periodic_checks():
-    while True:
-        await asyncio.sleep(max(10, config.refresh_interval))
-        await engine.run_checks()
 
 
 # API
